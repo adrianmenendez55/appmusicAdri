@@ -12,7 +12,7 @@ class Canciones
             'titulo' => array('type' => 'varchar', 'constraint' => 100),
             'url' => array('type' => 'varchar', 'constraint' => 200),
             'artista' => array('type' => 'varchar', 'constraint' => 100),
-            'id_usuario' => array('type' => 'int', 'constraint' => 11),
+            'reproducciones' => array('type' => 'int', 'constraint' => 11),
         ), array('id'));
     }
 
