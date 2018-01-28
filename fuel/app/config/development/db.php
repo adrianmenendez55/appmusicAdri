@@ -6,7 +6,7 @@
 return array(
 	'default' => array(
 		'connection'  => array(
-			'dsn'        => 'mysql:host=localhost;dbname=appmusicfinal',
+			'dsn'        => 'mysql:host=localhost;dbname=appmusicAdrian',
 			'username'   => 'alumnos',
 			'password'   => 'cev',
 		),
