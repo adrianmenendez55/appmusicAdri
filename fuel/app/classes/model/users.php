@@ -2,7 +2,7 @@
 
 class Model_Users extends Orm\Model
 {
-    protected static $_table_name = 'usuarios';
+    protected static $_table_name = 'users';
     protected static $_primary_key = array('id');
     protected static $_properties = array(
         'id', // both validation & typing observers will ignore the PK
@@ -18,22 +18,22 @@ class Model_Users extends Orm\Model
         'id_device' => array(
             'data_type' => 'varchar'   
         ),
-        'foto_perfil' => array(
+        'photo' => array(
             'data_type' => 'varchar'   
         ),
-        'descripcion' => array(
+        'description' => array(
             'data_type' => 'varchar'   
         ),
-        'cumple' => array(
+        'birthday' => array(
             'data_type' => 'varchar'   
         ),
-        'coordenada_x' => array(
+        'coord_x' => array(
             'data_type' => 'decimal'   
         ),
-        'coordenada_y' => array(
+        'coord_y' => array(
             'data_type' => 'decimal'   
         ),
-        'ciudad' => array(
+        'city' => array(
             'data_type' => 'varchar'   
         ),
         'id_rol' => array(

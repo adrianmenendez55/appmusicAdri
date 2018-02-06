@@ -2,21 +2,21 @@
 
 namespace Fuel\Migrations;
 
-class listasContienenCanciones
+class ListsWithSongs
 {
 
     function up()
     {
-        \DBUtil::create_table('listas_contienen_canciones', array(
-            'id_lista' => array('type' => 'int', 'constraint' => 11),
-            'id_cancion' => array('type' => 'int', 'constraint' => 11),
-        ), array('id_lista', 'id_cancion'), false, 'InnoDB', 'utf8_unicode_ci',
+        \DBUtil::create_table('listsWithSongs', array(
+            'id_list' => array('type' => 'int', 'constraint' => 11),
+            'id_song' => array('type' => 'int', 'constraint' => 11),
+        ), array('id_list', 'id_song'), false, 'InnoDB', 'utf8_unicode_ci',
 		    array(
 		        array(
 		            'constraint' => 'claveAjenaListasContienenCancionesAListas',
-		            'key' => 'id_lista',
+		            'key' => 'id_list',
 		            'reference' => array(
-		                'table' => 'listas',
+		                'table' => 'lists',
 		                'column' => 'id'
 		            ),
 		            'on_update' => 'CASCADE',
@@ -24,9 +24,9 @@ class listasContienenCanciones
 		        ),
 		        array(
 		            'constraint' => 'claveAjenaListasContienenCancionesACanciones',
-		            'key' => 'id_cancion',
+		            'key' => 'id_song',
 		            'reference' => array(
-		                'table' => 'canciones',
+		                'table' => 'songs',
 		                'column' => 'id'
 		            ),
 		            'on_update' => 'CASCADE',
@@ -38,6 +38,6 @@ class listasContienenCanciones
 
     function down()
     {
-       \DBUtil::drop_table('listas_contienen_canciones');
+       \DBUtil::drop_table('listsWithSongs');
     }
 }

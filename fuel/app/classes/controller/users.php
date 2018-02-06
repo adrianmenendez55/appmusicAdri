@@ -119,6 +119,17 @@ class Controller_Users extends Controller_Base
 
     public function post_delete()
     {
+        $header = apache_request_headers();
+        if (isset($header['Authorization'])) 
+        {
+            $token = $header['Authorization'];
+            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+        }
+        else
+        {
+            return $this->respuesta(400, 'Usuario no logueado', []);
+        }
+        
         $user = Model_Users::find($_POST['id']);
         $username = $user->username;
         $user->delete();

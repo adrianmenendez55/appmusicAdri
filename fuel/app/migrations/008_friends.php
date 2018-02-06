@@ -2,21 +2,21 @@
 
 namespace Fuel\Migrations;
 
-class Amigos
+class Friends
 {
 
     function up()
     {
-        \DBUtil::create_table('amigos', array(
-            'id_usuario_seguidor' => array('type' => 'int', 'constraint' => 11),
-            'id_usuario_seguido' => array('type' => 'int', 'constraint' => 11),
-        ), array('id_usuario_seguidor', 'id_usuario_seguido'), false, 'InnoDB', 'utf8_unicode_ci',
+        \DBUtil::create_table('friends', array(
+            'id_user_follower' => array('type' => 'int', 'constraint' => 11),
+            'id_user_followed' => array('type' => 'int', 'constraint' => 11),
+        ), array('id_user_follower', 'id_user_followed'), false, 'InnoDB', 'utf8_unicode_ci',
 		    array(
 		        array(
 		            'constraint' => 'claveAjenaAmigosAUsuariosSeguidor',
-		            'key' => 'id_usuario_seguidor',
+		            'key' => 'id_user_follower',
 		            'reference' => array(
-		                'table' => 'usuarios',
+		                'table' => 'users',
 		                'column' => 'id'
 		            ),
 		            'on_update' => 'CASCADE',
@@ -24,9 +24,9 @@ class Amigos
 		        ),
 		        array(
 		            'constraint' => 'claveAjenaAmigosAUsuariosSeguido',
-		            'key' => 'id_usuario_seguido',
+		            'key' => 'id_user_followed',
 		            'reference' => array(
-		                'table' => 'usuarios',
+		                'table' => 'users',
 		                'column' => 'id'
 		            ),
 		            'on_update' => 'CASCADE',
@@ -38,6 +38,6 @@ class Amigos
 
     function down()
     {
-       \DBUtil::drop_table('amigos');
+       \DBUtil::drop_table('friends');
     }
 }
