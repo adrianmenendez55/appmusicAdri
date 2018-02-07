@@ -2,7 +2,7 @@
 
 use Firebase\JWT\JWT;
 
-class Controller_Lists extends Controller_Base
+class Controller_News extends Controller_Base
 {
 	private $key = "sujdn53h3be62hbsy2bs27J5NFJ5K4EDLs2h23d";
 
@@ -22,27 +22,28 @@ class Controller_Lists extends Controller_Base
                 return $this->respuesta(400, 'Usuario no logueado', []);
             }
 
-            if ( empty($_POST['title'])) 
+            if (empty($_POST['title']) || empty($_POST['description'])) 
             {
-                return $this->respuesta(400, 'Introduce un título para tu lista', []);
+                return $this->respuesta(400, 'Existen campos vacíos', []);
             }
             else
             {
             	$title = $_POST['title'];
+            	$description = $_POST['description'];
 
-            	if($this->isListCreated($title))
-            	{
-            		return $this->respuesta(400, 'Ya existe una lista con este título', []);
-            	}
-            	else
-            	{
-            		$lists = new Model_Lists();
-                	$lists->title = $title;
-                	$lists->editable = 1;
-                	$lists->id_user = $id_user;
-                	$lists->save();
-            		return $this->respuesta(200, 'Lista creada', ['List' => $lists]);
-            	}
+                if($this->isNewsCreated($title, $description))
+                {
+                    return $this->respuesta(400, 'Esta noticia ya existe', []);
+                }
+                else
+                {
+                    $news = new Model_News();
+                    $news->title = $title;
+                    $news->description = $description;
+                    $news->id_user = $id_user;
+                    $news->save();
+                    return $this->respuesta(200, 'Noticia creada', ['news' => $news]);
+                }
             }
     	}
     	catch (Exception $e) 
@@ -51,15 +52,16 @@ class Controller_Lists extends Controller_Base
         }
     }
 
-    public function isListCreated($title)
+    public function isNewsCreated($title, $description)
     {
-        $lists = Model_Lists::find('all', array(
+        $news = Model_News::find('all', array(
             'where' => array(
-                array('title', $title)
+                array('title', $title),
+                array('description', $description)
             )
         ));
 
-        if($lists != null)
+        if($news != null)
         {
             return true;
         }
@@ -69,7 +71,37 @@ class Controller_Lists extends Controller_Base
         }
     }
 
-    public function get_lists()
+    public function get_myNews()
+    {
+        $header = apache_request_headers();
+        if (isset($header['Authorization'])) 
+        {
+            $token = $header['Authorization'];
+            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+            $id_user = $dataJwtUser->id;
+        }
+        else
+        {
+            return $this->respuesta(400, 'Usuario no logueado', []);
+        }
+
+        $news = Model_News::find('all', array(
+            'where' => array(
+                array('id_user', $id_user)
+            )
+        ));
+
+        if($news != null)
+        {
+            return $this->respuesta(200, 'Noticias del usuario', ['user_news' => $news]);
+        }
+        else 
+        {
+            return $this->respuesta(200, 'Este usuario no ha escrito noticias', []);
+        }
+    }
+
+    public function get_news()
     {
         $header = apache_request_headers();
         if (isset($header['Authorization'])) 
@@ -81,8 +113,44 @@ class Controller_Lists extends Controller_Base
         {
             return $this->respuesta(400, 'Usuario no logueado', []);
         }
-        	$lists = Model_Lists::find('all');
-        	return $this->response(Arr::reindex($lists));
+
+        $news = Model_News::find('all');
+        return $this->response(Arr::reindex($news));
+    }
+
+    public function post_editNews()
+    {
+        $header = apache_request_headers();
+        if (isset($header['Authorization'])) 
+        {
+            $token = $header['Authorization'];
+            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+        }
+        else
+        {
+            return $this->respuesta(400, 'Usuario no logueado', []);
+        }
+
+        if (!isset($_POST['id'])) 
+        {
+            return $this->respuesta(400, 'Escribe el id de la noticia a editar', []);
+        }
+        else
+        {
+            if (empty($_POST['title']) || empty($_POST['description'])) 
+            {
+                return $this->respuesta(400, 'Existen campos vacíos', []);
+            }
+            else
+            {
+                $news = Model_News::find($_POST['id']);
+                $news->title = $_POST['title'];
+                $news->description = $_POST['description'];
+                $news->save();
+
+                return $this->respuesta(200, 'Noticia editada con éxito', ['News' => $news]);
+            }
+        }
     }
 
     public function post_delete()
@@ -98,69 +166,13 @@ class Controller_Lists extends Controller_Base
             return $this->respuesta(400, 'Usuario no logueado', []);
         }
         
-        $lists = Model_Songs::find($_POST['id']);
-        $lists = $lists->title;
-        $lists->delete();
+        $news = Model_News::find($_POST['id']);
+        $news = $news->title;
+        $news = $news->description;
+        $news->delete();
 
-        return $this->respuesta(200, 'Lista borrada', []);
+        return $this->respuesta(200, 'Noticia borrada', []);
     }
 
-    public function post_editList()
-    {
-        $header = apache_request_headers();
-        if (isset($header['Authorization'])) 
-        {
-            $token = $header['Authorization'];
-            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
-        }
-        else
-        {
-            return $this->respuesta(400, 'Usuario no logueado', []);
-        }
-
-        if (!isset($_POST['id'])) 
-        {
-            return $this->respuesta(400, 'Escribe el id de la lista a editar', []);
-        }
-        else
-        {
-            if (empty($_POST['title'])) 
-            {
-                return $this->respuesta(400, 'Introduce un título nuevo', []);
-            }
-
-            else
-            {
-                $lists = Model_Lists::find($_POST['id']);
-                $lists->title = $_POST['title'];
-                $lists->save();
-
-                return $this->respuesta(200, 'Lista editada con éxito', ['List' => $lists]);
-            }
-        }
-    }
-
-    public function post_addSong()
-    {
-        $header = apache_request_headers();
-        if (isset($header['Authorization'])) 
-        {
-            $token = $header['Authorization'];
-            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
-        }
-        else
-        {
-            return $this->respuesta(400, 'Usuario no logueado', []);
-        }
-
-        if (empty($_POST['id_list']) || empty($_POST['id_song'])) 
-        {
-            return $this->respuesta(400, 'Existen campos vacíos', []);
-        }
-        else
-        {
-        	$id_list = $_POST['id_list'];
-        	$id_song = $_POST['id_song'];
-        }
-    }
+    // get_nearNews
 }
