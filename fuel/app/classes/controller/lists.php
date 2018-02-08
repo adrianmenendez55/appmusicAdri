@@ -159,8 +159,49 @@ class Controller_Lists extends Controller_Base
         }
         else
         {
-        	$id_list = $_POST['id_list'];
-        	$id_song = $_POST['id_song'];
+            $id_list = $_POST['id_list'];
+            $id_song = $_POST['id_song'];
+
+            $listsWithSongs = Model_ListsWithSongs::find('all', array(
+                'where' => array(
+                    array('id_list', $id_list),
+                    array('id_song', $id_song)
+                )
+            ));
+
+            if($listWithSongs != null)
+            {
+                return $this->respuesta(400, 'La canción ya estaba añadida a la lista', []);
+                
+            }
+            else
+            {
+                $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+                $id_user = $dataJwtUser->id;
+
+                
+
+                $list = Model_Lists::find('all', array(
+                    'where' => array(
+                        array('id', $id_list),
+                        array('id_user', $id_user)
+                    )
+                ));
+
+                if(isset($list))
+                {
+                    $listWithSongs = New Model_ListsWithSongs();
+                    $listWithSongs->id_list = $id_list;
+                    $listWithSongs->id_song = $id_song;
+                    $listWithSongs = save();
+
+                    return $this->respuesta(200, 'Canción añadida a la lista', ['listWithSongs' => $listWithSongs]);
+                }
+                else
+                {
+                    return $this->respuesta(400, 'La lista no existe', []);
+                }
+            }
         }
     }
 }

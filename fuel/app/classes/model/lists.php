@@ -17,16 +17,16 @@ class Model_Lists extends Orm\Model
         )
     );
 
-    /*protected static $_many_many = array(
+    protected static $_many_many = array(
     'songs' => array(
             'key_from' => 'id',
-            'key_through_from' => 'post_id',
-            'table_through' => 'posts_songs',
+            'key_through_from' => 'id_list',
+            'table_through' => 'listsWithSongs',
             'key_through_to' => 'id_song',
             'model_to' => 'Model_Songs',
             'key_to' => 'id',
             'cascade_save' => true,
             'cascade_delete' => false,
         )
-    );*/
+    );
 }
