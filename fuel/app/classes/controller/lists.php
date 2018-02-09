@@ -162,14 +162,14 @@ class Controller_Lists extends Controller_Base
             $id_list = $_POST['id_list'];
             $id_song = $_POST['id_song'];
 
-            $listsWithSongs = Model_ListsWithSongs::find('all', array(
+            $add = Model_Add::find('all', array(
                 'where' => array(
                     array('id_list', $id_list),
                     array('id_song', $id_song)
                 )
             ));
 
-            if($listWithSongs != null)
+            if(!empty($add))
             {
                 return $this->respuesta(400, 'La canción ya estaba añadida a la lista', []);
                 
@@ -178,8 +178,6 @@ class Controller_Lists extends Controller_Base
             {
                 $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
                 $id_user = $dataJwtUser->id;
-
-                
 
                 $list = Model_Lists::find('all', array(
                     'where' => array(
@@ -190,12 +188,12 @@ class Controller_Lists extends Controller_Base
 
                 if(isset($list))
                 {
-                    $listWithSongs = New Model_ListsWithSongs();
-                    $listWithSongs->id_list = $id_list;
-                    $listWithSongs->id_song = $id_song;
-                    $listWithSongs = save();
+                    $add = New Model_Add();
+                    $add->id_list = $id_list;
+                    $add->id_song = $id_song;
+                    $add->save();
 
-                    return $this->respuesta(200, 'Canción añadida a la lista', ['listWithSongs' => $listWithSongs]);
+                    return $this->respuesta(200, 'Canción añadida a la lista', ['listWithSongs' => $add]);
                 }
                 else
                 {
