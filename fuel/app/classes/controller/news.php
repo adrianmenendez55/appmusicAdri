@@ -167,12 +167,15 @@ class Controller_News extends Controller_Base
         }
         
         $news = Model_News::find($_POST['id']);
-        $news = $news->title;
-        $news = $news->description;
-        $news->delete();
-
-        return $this->respuesta(200, 'Noticia borrada', []);
+        
+        if ($news != null)
+        {
+            $news->delete();
+            return $this->respuesta(200, 'Noticia borrada', []);
+        }
+        else
+        {
+            return $this->respuesta(400, 'La noticia no existe', []);
+        }
     }
-
-    // get_nearNews
 }

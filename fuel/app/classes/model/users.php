@@ -40,4 +40,24 @@ class Model_Users extends Orm\Model
             'data_type' => 'int'   
         )
     );
+
+    /*protected static $_has_many = array(
+        'following' => array(
+            'key_from' => 'id',
+            'model_to' => 'Model_Following',
+            'key_to' => 'id_user_follower',
+            'cascade_save' => true,
+            'cascade_delete' => false,
+        )
+    );
+
+    protected static $_has_many = array(
+        'following' => array(
+            'key_from' => 'id',
+            'model_to' => 'Model_Following',
+            'key_to' => 'id_user_followed',
+            'cascade_save' => true,
+            'cascade_delete' => false,
+        )
+    );*/
 }

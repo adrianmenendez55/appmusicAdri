@@ -98,11 +98,17 @@ class Controller_Lists extends Controller_Base
             return $this->respuesta(400, 'Usuario no logueado', []);
         }
         
-        $lists = Model_Songs::find($_POST['id']);
-        $lists = $lists->title;
-        $lists->delete();
-
-        return $this->respuesta(200, 'Lista borrada', []);
+        $lists = Model_Lists::find($_POST['id']);
+        
+        if($lists != null)
+        {
+            $lists->delete();
+            return $this->respuesta(200, 'Lista borrada', []);
+        }
+        else
+        {
+            return $this->respuesta(400, 'La lista no existe', []);
+        } 
     }
 
     public function post_editList()
@@ -199,6 +205,47 @@ class Controller_Lists extends Controller_Base
                 {
                     return $this->respuesta(400, 'La lista no existe', []);
                 }
+            }
+        }
+    }
+
+    public function post_quitSong()
+    {
+        $header = apache_request_headers();
+        if (isset($header['Authorization'])) 
+        {
+            $token = $header['Authorization'];
+            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+        }
+        else
+        {
+            return $this->respuesta(400, 'Usuario no logueado', []);
+        }
+
+        if (empty($_POST['id_list']) || empty($_POST['id_song'])) 
+        {
+            return $this->respuesta(400, 'Existen campos vacíos', []);
+        }
+        else
+        {
+            $id_list = $_POST['id_list'];
+            $id_song = $_POST['id_song'];
+
+            $add = Model_Add::find('first', array(
+                'where' => array(
+                    array('id_list', $id_list),
+                    array('id_song', $id_song)
+                )
+            ));
+
+            if(!empty($add))
+            {
+                $add->delete();
+                return $this->respuesta(400, 'Has quitado la canción de la lista', ['quitSong' => $id_song]);  
+            }
+            else
+            {
+                return $this->respuesta(400, 'La canción ya estaba quitada de la lista', []); 
             }
         }
     }

@@ -40,7 +40,20 @@ class Controller_Users extends Controller_Base
                 $users->email = $email;
                 $users->password = $password;
                 $users->id_rol = 2;
+                $users->id_device = random_int(0, 5000000);
+                $users->coord_x = random_int(0, 5000000) / 10;
+                $users->coord_y = random_int(0, 5000000) / 10;
                 $users->save();
+
+                $privacityUser = new Model_Privacity();
+                $privacityUser->profile = 1;
+                $privacityUser->friends = 0;
+                $privacityUser->lists = 1;
+                $privacityUser->notifications = 1;
+                $privacityUser->location = 0;
+                $privacityUser->id_user = $users->id;
+                $privacityUser->save();
+
                 return $this->respuesta(200, 'Usuario creado', ['user' => $users]);
 
             }
@@ -92,6 +105,10 @@ class Controller_Users extends Controller_Base
                     $id = $users[$key]->id;
                     $username = $users[$key]->username;
                     $password = $users[$key]->password;
+                    $id_rol = $users[$key]->id_rol;
+                    $id_device = $users[$key]->id_device;
+                    $coord_x = $users[$key]->coord_x;
+                    $coord_y = $users[$key]->coord_y;
                 }
             }
             else
@@ -104,11 +121,15 @@ class Controller_Users extends Controller_Base
                 $datatoken = array(
                     "id" => $id,
                     "username" => $username,
-                    "password" => $password
+                    "password" => $password,
+                    "id_rol" => $id_rol,
+                    "id_device" => $id_device,
+                    "coord_x"=> $coord_x,
+                    "coord_y"=> $coord_y
                 );
                 $Token = JWT::encode($datatoken, $this->key);
                 
-                return $this->respuesta(200, 'Login Correcto', ['token' => $Token, 'username' => $username]);
+                return $this->respuesta(200, 'Login Correcto', ['token' => $Token, 'username' => $username, 'id_device' => $id_device, 'coord_x' => $coord_x, 'coord_y' => $coord_y]);
             }
         }
         catch (Exception $e) 
@@ -130,15 +151,18 @@ class Controller_Users extends Controller_Base
             return $this->respuesta(400, 'Usuario no logueado', []);
         }
         
-        $user = Model_Users::find($_POST['id']);
-        $username = $user->username;
-        $user->delete();
-        $json = $this->response(array(
-            'code' => 200,
-            'message' => 'usuario borrado',
-            'data' => $username
-        ));
-        return $json;
+        $users = Model_Users::find($_POST['id']);
+
+        if ($users != null)
+        {
+            $users->delete();
+
+            return $this->respuesta(200, 'Usuario borrado', []);
+        }
+        else
+        {
+            return $this->respuesta(400, 'El usuario no existe', []);
+        }
     }
 
     public function get_users()
@@ -288,6 +312,16 @@ class Controller_Users extends Controller_Base
                 $users->password = $password;
                 $users->id_rol = 1;
                 $users->save();
+
+                $privacityUser = new Model_Privacity();
+                $privacityUser->profile = 1;
+                $privacityUser->friends = 0;
+                $privacityUser->lists = 1;
+                $privacityUser->notifications = 1;
+                $privacityUser->location = 0;
+                $privacityUser->id_user = $users->id;
+                $privacityUser->save();
+
                 return $this->respuesta(200, 'Administrador creado', ['user' => $users]);
 
             }
@@ -314,5 +348,251 @@ class Controller_Users extends Controller_Base
         {
             return false;
         }
-    }     
+    }
+
+    public function post_follow()
+    {
+        $header = apache_request_headers();
+        if (isset($header['Authorization'])) 
+        {
+            $token = $header['Authorization'];
+            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+            $id_user = $dataJwtUser->id;
+        }
+        else
+        {
+            return $this->respuesta(400, 'Usuario no logueado', []);
+        }
+
+        if (empty($_POST['id_user_toFollow'])) 
+        {
+            return $this->respuesta(400, 'Existen campos vacíos', []);
+        }
+        else
+        {
+            $id_user_followed = $_POST['id_user_toFollow'];
+
+            $following = Model_Following::find('all', array(
+                'where' => array(
+                    array('id_user_follower', $id_user),
+                    array('id_user_followed', $id_user_followed)
+                )
+            ));
+
+            if(empty($following))
+            {
+                $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+                $id_user = $dataJwtUser->id;
+
+                $following = New Model_Following();
+                $following->id_user_follower = $id_user;
+                $following->id_user_followed = $id_user_followed;
+                $following->save();
+
+                return $this->respuesta(200, 'Sigues a este usuario', ['follows' => $id_user_followed]);
+            }
+            else
+            {
+                return $this->respuesta(400, 'Ya sigues a este usuario', []);
+            }
+        }
+    }
+
+    public function post_unfollow()
+    {
+        $header = apache_request_headers();
+        if (isset($header['Authorization'])) 
+        {
+            $token = $header['Authorization'];
+            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+            $id_user = $dataJwtUser->id;
+        }
+        else
+        {
+            return $this->respuesta(400, 'Usuario no logueado', []);
+        }
+
+        if (empty($_POST['id_user_unfollow'])) 
+        {
+            return $this->respuesta(400, 'Existen campos vacíos', []);
+        }
+        else
+        {
+            $id_user_unfollow = $_POST['id_user_unfollow'];
+
+            $following = Model_Following::find('first', array(
+                'where' => array(
+                    array('id_user_follower', $id_user),
+                    array('id_user_followed', $id_user_unfollow)    
+                )
+            ));
+
+            if($following != null)
+            {
+                $following->delete();
+
+                return $this->respuesta(200, 'Has dejado de seguir a este usuario', ['unfollows' => $id_user_unfollow]);
+            }
+            else
+            {
+                return $this->respuesta(400, 'No sigues a este usuario', []);
+            }
+        }
+    }
+
+    public function get_follows()
+    {
+        $header = apache_request_headers();
+        if (isset($header['Authorization'])) 
+        {
+            $token = $header['Authorization'];
+            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+            $id_user = $dataJwtUser->id;
+        }
+        else
+        {
+            return $this->respuesta(400, 'Usuario no logueado', []);
+        }
+
+        $following = Model_Following::find('all');
+        return $this->response(Arr::reindex($following));
+    }
+
+    public function isUserFollowed($id_user_toFollow)
+    {
+        $following = Model_Following::find('first', array(
+            'where' => array(
+                array('id_user_followed', $id_user_toFollow)
+            )
+        ));
+
+        if($following != null)
+        {
+            return true;
+        }
+        else 
+        {
+            return false;
+        }
+    }
+
+    /*public function post_editPrivacity()
+    {
+        $header = apache_request_headers();
+        if (isset($header['Authorization'])) 
+        {
+            $token = $header['Authorization'];
+            $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+            $id_user = $dataJwtUser->id;
+        }
+        else
+        {
+            return $this->respuesta(400, 'Usuario no logueado', []);
+        }
+
+        if (empty($_POST['profile']) || empty($_POST['friends']) || empty($_POST['lists']) || empty($_POST['notifications']) || empty($_POST['location'])) 
+        {
+            return $this->respuesta(400, 'Existen campos vacíos', []);
+        }
+        else
+        {
+            $privacityUser = Model_Privacity::find($id_user);
+            $privacityUser->id = $id_user;
+            $privacityUser->profile = $_POST['profile'];
+            $privacityUser->friends = $_POST['friends'];
+            $privacityUser->lists = $_POST['lists'];
+            $privacityUser->notifications = $_POST['notifications'];
+            $privacityUser->location = $_POST['location'];
+            $privacityUser->id_user = $id_user;
+            $privacityUser->save();
+                
+            return $this->respuesta(200, 'Preferencias de privacidad cambiadas', []);             
+        }   
+    }*/
+
+    public function post_editProfile()
+    {
+        try 
+        {
+            $header = apache_request_headers();
+            if (isset($header['Authorization'])) 
+            {
+                $token = $header['Authorization'];
+                $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+                $id_user = $dataJwtUser->id;
+            }
+            else
+            {
+                return $this->respuesta(400, 'Usuario no logueado', []);
+            }
+
+            if (empty($_POST['photo']) || empty($_POST['description']) || empty($_POST['birthday']) || empty($_POST['city'])) 
+            {
+                return $this->respuesta(400, 'Existen campos vacíos', []);
+            }
+            else
+            {
+                $edit = Model_Users::find($dataJwtUser->id);
+                $edit->photo = $_POST['photo'];
+                $edit->description = $_POST['description'];
+                $edit->birthday = $_POST['birthday'];
+                $edit->city = $_POST['city'];
+
+                $edit->save();
+                
+                return $this->respuesta(200, 'Cambios en el perfil guardados', []);
+            }
+        }
+        catch (Exception $e)
+        {
+            return $this->respuesta(500, $e->getMessage(), []);
+        } 
+    }
+
+
+    /*public function uploadImage()
+    {
+        try
+        {
+            // Custom configuration for this upload
+            $config = array(
+                'path' => DOCROOT . 'assets/img',
+                'randomize' => true,
+                'ext_whitelist' => array('img', 'jpg', 'jpeg', 'gif', 'png'),
+            );
+            // process the uploaded files in $_FILES
+            Upload::process($config);
+            // if there are any valid files
+            if (Upload::is_valid())
+            {
+                // save them according to the config
+                Upload::save();
+                foreach(Upload::get_files() as $file)
+                {
+                    $users = Model_Users::find($dataJwtUser->id);
+                    $users->photo = 'http://' . $_SERVER['SERVER_NAME'] . '/appmusicAdrian/public/assets/img/' . $file['saved_as'];
+                    $users->save();
+                }
+            }
+            return $this->response(array(
+                'code' => 200,
+                'message' => 'Datos actualizados',
+                'data' => [$users]
+            ));
+            // and process any errors
+
+            foreach (Upload::get_errors() as $file)
+            {
+                return $this->response(array(
+                    'code' => 500,
+                    'message' => 'No se ha podido subir la imagen',
+                    'data' => []
+                ));
+            }        
+        }
+        catch (Exception $e)
+        {
+           return $this->respuesta(500, $e->getMessage(), []); 
+        }
+    }*/
 }

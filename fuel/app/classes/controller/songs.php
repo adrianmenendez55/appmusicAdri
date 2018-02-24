@@ -106,10 +106,17 @@ class Controller_Songs extends Controller_Base
         }
         
         $songs = Model_Songs::find($_POST['id']);
-        $songs = $songs->title;
-        $songs->delete();
+        
+        if($songs != null)
+        {
+            $songs->delete();
+            return $this->respuesta(200, 'Canción borrada', []);
 
-        return $this->respuesta(200, 'Canción borrada', []);
+        }
+        else
+        {
+            return $this->respuesta(400, 'La canción no existe', []);
+        }
     }
 
     public function post_editSong()
@@ -150,6 +157,47 @@ class Controller_Songs extends Controller_Base
 
                 return $this->respuesta(200, 'Canción editada con éxito', ['Song' => $songs]);
             }
+        }
+    }
+
+    public function post_playSong()
+    {
+        try
+        {
+            $header = apache_request_headers();
+            if (isset($header['Authorization'])) 
+            {
+                $token = $header['Authorization'];
+                $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+            }
+            else
+            {
+                return $this->respuesta(400, 'Usuario no logueado', []);
+            }
+
+            if (empty($_POST['id'])) 
+            {
+                return $this->respuesta(400, 'Escribe el id de la canción a editar', []);
+            }
+            else
+            {
+                if (!isset($_POST['id'])) 
+                {
+                    return $this->respuesta(400, 'Esta canción no existe', []);
+                }
+                else
+                {
+                    $songs = Model_Songs::find($_POST['id']);
+                    $songs->reproductions += 1;
+                    $songs->save();
+
+                    return $this->respuesta(200, 'Reproduciendo canción...', ['reproductions' => $songs->reproductions]);
+                }
+            }
+        }
+        catch (Exception $e) 
+        {
+            return $this->respuesta(500, $e->getMessage(), []);
         }
     }
 }
