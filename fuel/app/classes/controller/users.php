@@ -182,6 +182,46 @@ class Controller_Users extends Controller_Base
         return $this->response(Arr::reindex($users));
     }
 
+    public function post_user()
+    {
+        try
+        {
+            $header = apache_request_headers();
+            if (isset($header['Authorization'])) 
+            {
+                $token = $header['Authorization'];
+                $dataJwtUser = JWT::decode($token, $this->key, array('HS256'));
+            }
+            else
+            {
+                return $this->respuesta(400, 'Usuario no logueado', []);
+            }
+
+            if(isset($_POST['id_user']))
+            {
+                if(empty($_POST['id_user']))
+                {
+                    return $this->respuesta(400, 'Usuario no introducido', []);
+                }
+                else
+                {   
+                    $id = $_POST['id_user'];
+                    $users = Model_Users::find($id);
+                    return $this->respuesta(200, 'Usuario devuelto', ['user' => $users]);
+                }
+            }
+            else
+            {
+                return $this->respuesta(400, 'Usuario no existente', []);
+            }
+        }
+        catch(Exception $e)
+        {
+            return $this->respuesta(500, $e->getMessage(), []);
+        }
+    }
+
+
     public function post_emailValidate()
     {
         try 
@@ -476,7 +516,7 @@ class Controller_Users extends Controller_Base
         }
     }
 
-    /*public function post_editPrivacity()
+    public function post_editPrivacity()
     {
         $header = apache_request_headers();
         if (isset($header['Authorization'])) 
@@ -490,15 +530,16 @@ class Controller_Users extends Controller_Base
             return $this->respuesta(400, 'Usuario no logueado', []);
         }
 
-        if (empty($_POST['profile']) || empty($_POST['friends']) || empty($_POST['lists']) || empty($_POST['notifications']) || empty($_POST['location'])) 
+        if (!isset($_POST['profile']) || !isset($_POST['friends']) || !isset($_POST['lists']) || !isset($_POST['notifications']) || !isset($_POST['location'])) 
         {
             return $this->respuesta(400, 'Existen campos vacíos', []);
         }
         else
         {
-            $privacityUser = Model_Privacity::find($id_user);
-            $privacityUser->id = $id_user;
-            $privacityUser->profile = $_POST['profile'];
+            $profile = $_POST['profile'];
+
+            $privacityUser = Model_Users::find($id_user);
+            $privacityUser->profile = $profile;
             $privacityUser->friends = $_POST['friends'];
             $privacityUser->lists = $_POST['lists'];
             $privacityUser->notifications = $_POST['notifications'];
@@ -506,9 +547,9 @@ class Controller_Users extends Controller_Base
             $privacityUser->id_user = $id_user;
             $privacityUser->save();
                 
-            return $this->respuesta(200, 'Preferencias de privacidad cambiadas', []);             
+            return $this->respuesta(200, 'Preferencias de privacidad cambiadas', ['privacity' => $privacityUser]);             
         }   
-    }*/
+    }
 
     public function post_editProfile()
     {
@@ -526,14 +567,13 @@ class Controller_Users extends Controller_Base
                 return $this->respuesta(400, 'Usuario no logueado', []);
             }
 
-            if (empty($_POST['photo']) || empty($_POST['description']) || empty($_POST['birthday']) || empty($_POST['city'])) 
+            if (empty($_FILES['photo']) || empty($_POST['description']) || empty($_POST['birthday']) || empty($_POST['city'])) 
             {
                 return $this->respuesta(400, 'Existen campos vacíos', []);
             }
             else
             {
                 $edit = Model_Users::find($dataJwtUser->id);
-                $edit->photo = $_POST['photo'];
                 $edit->description = $_POST['description'];
                 $edit->birthday = $_POST['birthday'];
                 $edit->city = $_POST['city'];
@@ -548,7 +588,6 @@ class Controller_Users extends Controller_Base
             return $this->respuesta(500, $e->getMessage(), []);
         } 
     }
-
 
     /*public function uploadImage()
     {
